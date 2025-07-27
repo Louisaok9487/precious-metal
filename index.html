@@ -10,97 +10,111 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f0f2f5;
+            background-color: #e2e8f0; /* Softer background */
             display: flex;
             justify-content: center;
             align-items: flex-start; /* Align to the top, not center vertically */
             min-height: 100vh;
-            padding: 2rem;
+            padding: 2.5rem; /* Increased padding */
             box-sizing: border-box;
         }
         .dashboard-container {
             background-color: #ffffff;
-            border-radius: 1rem;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            padding: 2.5rem;
+            border-radius: 1.5rem; /* More rounded corners */
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15); /* Stronger, softer shadow */
+            padding: 3rem; /* Increased padding */
             width: 100%;
-            max-width: 400px; /* Adjusted max-width for single column */
+            max-width: 450px; /* Slightly wider for better number display */
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
-            gap: 2rem;
+            gap: 2.5rem; /* Increased gap between sections */
         }
         .price-card {
-            background-color: #f9fafb;
-            border-radius: 0.75rem;
-            padding: 1.5rem;
+            background-color: #f8fafc; /* Lighter card background */
+            border-radius: 1rem; /* Rounded corners for cards */
+            padding: 2rem; /* More padding inside cards */
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
-            border: 1px solid #e5e7eb;
-            width: 100%; /* Ensure card takes full width of its container */
+            gap: 1rem; /* Space between elements in card */
+            border: 1px solid #e2e8f0; /* Subtle border */
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08); /* Card specific shadow */
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* Smooth hover effect */
+        }
+        .price-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
         }
         .price-value {
-            font-size: 2.5rem;
+            font-size: 2.8rem; /* Larger font size */
             font-weight: 700;
-            color: #1f2937;
-            word-wrap: break-word; /* Allow long numbers to wrap if necessary */
+            color: #1a202c; /* Darker text for contrast */
+            word-wrap: break-word;
+            text-align: center; /* Center align price value */
         }
         .timestamp {
-            font-size: 0.875rem;
-            color: #6b7280;
+            font-size: 0.95rem; /* Slightly larger timestamp */
+            color: #718096; /* Softer grey */
+            text-align: center; /* Center align timestamp */
         }
         .header {
-            font-size: 2.25rem;
+            font-size: 2.5rem; /* Slightly larger header */
             font-weight: 700;
-            color: #1f2937;
+            color: #2d3748; /* Darker header text */
             text-align: center;
             margin-bottom: 1.5rem;
+            letter-spacing: -0.025em; /* Tighter letter spacing */
         }
         .refresh-button {
-            background-color: #4f46e5;
+            background-image: linear-gradient(to right, #667eea, #764ba2); /* Gradient background */
             color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
+            padding: 1rem 2rem; /* More padding */
+            border-radius: 0.75rem; /* More rounded */
             font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: all 0.3s ease-in-out; /* Smooth transition */
             border: none;
-            align-self: flex-end; /* Align button to the right */
+            align-self: center; /* Center button */
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4); /* Button shadow */
+            font-size: 1.1rem;
         }
         .refresh-button:hover {
-            background-color: #4338ca;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.6);
+            background-image: linear-gradient(to left, #667eea, #764ba2); /* Reverse gradient on hover */
         }
         .loading-spinner {
             border: 4px solid rgba(0, 0, 0, 0.1);
-            border-left-color: #4f46e5;
+            border-left-color: #667eea; /* Spinner color matching button */
             border-radius: 50%;
-            width: 24px;
-            height: 24px;
+            width: 30px; /* Slightly larger spinner */
+            height: 30px;
             animation: spin 1s linear infinite;
-            margin: 0 auto; /* Center the spinner */
+            margin: 0 auto;
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
         .message-box {
-            background-color: #fff3cd;
-            border: 1px solid #ffeeba;
-            color: #856404;
-            padding: 1rem;
-            border-radius: 0.5rem;
+            background-color: #e0f2fe; /* Lighter blue for info */
+            border: 1px solid #90cdf4;
+            color: #2b6cb0;
+            padding: 1.2rem;
+            border-radius: 0.75rem;
             margin-top: 1rem;
             text-align: center;
+            font-weight: 500;
         }
         .error-box {
-            background-color: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
-            padding: 1rem;
-            border-radius: 0.5rem;
+            background-color: #fee2e2; /* Lighter red for error */
+            border: 1px solid #fc8181;
+            color: #c53030;
+            padding: 1.2rem;
+            border-radius: 0.75rem;
             margin-top: 1rem;
             text-align: center;
+            font-weight: 500;
         }
     </style>
 </head>
@@ -111,21 +125,21 @@
         <div id="loadingIndicator" class="loading-spinner hidden"></div>
         <div id="errorMessage" class="error-box hidden"></div>
 
-        <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-6"> <!-- Increased gap between cards -->
             <div class="price-card">
-                <h2 class="text-xl font-semibold text-gray-800">Bitcoin (BTC)</h2>
+                <h2 class="text-xl font-semibold text-gray-800 text-center">Bitcoin (BTC)</h2>
                 <p id="bitcoinPrice" class="price-value">Loading...</p>
                 <p id="bitcoinTimestamp" class="timestamp">Last updated: --</p>
             </div>
 
             <div class="price-card">
-                <h2 class="text-xl font-semibold text-gray-800">Gold (XAU)</h2>
+                <h2 class="text-xl font-semibold text-gray-800 text-center">Gold (XAU)</h2>
                 <p id="goldPrice" class="price-value">Loading...</p>
                 <p id="goldTimestamp" class="timestamp">Last updated: --</p>
             </div>
 
             <div class="price-card">
-                <h2 class="text-xl font-semibold text-gray-800">Silver (XAG)</h2>
+                <h2 class="text-xl font-semibold text-gray-800 text-center">Silver (XAG)</h2>
                 <p id="silverPrice" class="price-value">Loading...</p>
                 <p id="silverTimestamp" class="timestamp">Last updated: --</p>
             </div>
