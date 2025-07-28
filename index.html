@@ -15,81 +15,81 @@
             justify-content: center;
             align-items: flex-start; /* Align to the top, not center vertically */
             min-height: 100vh;
-            padding: 1.5rem; /* Reduced padding */
+            padding: 1rem; /* Reduced padding further */
             box-sizing: border-box;
         }
         .dashboard-container {
             background-color: #ffffff;
-            border-radius: 1.25rem; /* Slightly less rounded */
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); /* Slightly softer shadow */
-            padding: 2rem; /* Reduced padding */
+            border-radius: 1rem; /* Slightly less rounded */
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08); /* Softer shadow */
+            padding: 1.5rem; /* Reduced padding further */
             width: 100%;
-            max-width: 380px; /* Adjusted max-width for tighter fit on mobile */
+            max-width: 360px; /* Adjusted max-width for tighter fit on mobile */
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
-            gap: 1.5rem; /* Reduced gap between sections */
+            gap: 1rem; /* Reduced gap between sections */
         }
         .price-card {
             background-color: #f8fafc; /* Lighter card background */
-            border-radius: 0.75rem; /* Slightly less rounded for cards */
-            padding: 1.25rem; /* Reduced padding inside cards */
+            border-radius: 0.6rem; /* Slightly less rounded for cards */
+            padding: 1rem; /* Reduced padding inside cards */
             display: flex;
             flex-direction: column;
-            gap: 0.5rem; /* Reduced space between elements in card */
+            gap: 0.4rem; /* Reduced space between elements in card */
             border: 1px solid #e2e8f0; /* Subtle border */
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06); /* Softer card specific shadow */
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); /* Softer card specific shadow */
             transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* Smooth hover effect */
         }
         .price-card:hover {
-            transform: translateY(-3px); /* Less dramatic lift on hover */
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.09);
+            transform: translateY(-2px); /* Less dramatic lift on hover */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.07);
         }
         .price-value {
-            font-size: 2.2rem; /* Reduced font size */
+            font-size: 1.5rem; /* Reduced font size */
             font-weight: 700;
             color: #1a202c; /* Darker text for contrast */
             word-wrap: break-word;
             text-align: center; /* Center align price value */
-            line-height: 1.1; /* Tighter line height */
+            line-height: 1; /* Tighter line height */
         }
         .timestamp {
-            font-size: 0.85rem; /* Reduced timestamp font size */
+            font-size: 0.7rem; /* Reduced timestamp font size */
             color: #718096; /* Softer grey */
             text-align: center; /* Center align timestamp */
         }
         .header {
-            font-size: 2rem; /* Reduced header font size */
+            font-size: 1.25rem; /* Reduced header font size */
             font-weight: 700;
             color: #2d3748; /* Darker header text */
             text-align: center;
-            margin-bottom: 1rem; /* Reduced margin */
-            letter-spacing: -0.02em; /* Slightly less tight letter spacing */
+            margin-bottom: 0.75rem; /* Reduced margin */
+            letter-spacing: -0.01em; /* Slightly less tight letter spacing */
         }
         .refresh-button {
             background-image: linear-gradient(to right, #667eea, #764ba2); /* Gradient background */
             color: white;
-            padding: 0.75rem 1.5rem; /* Reduced padding */
-            border-radius: 0.6rem; /* Slightly less rounded */
+            padding: 0.6rem 1.2rem; /* Reduced padding */
+            border-radius: 0.5rem; /* Slightly less rounded */
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease-in-out; /* Smooth transition */
             border: none;
             align-self: center; /* Center button */
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3); /* Softer button shadow */
-            font-size: 1rem; /* Reduced font size */
+            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.25); /* Softer button shadow */
+            font-size: 0.9rem; /* Reduced font size */
         }
         .refresh-button:hover {
-            transform: translateY(-2px); /* Less dramatic lift on hover */
-            box-shadow: 0 6px 15px rgba(102, 126, 234, 0.5);
+            transform: translateY(-1px); /* Less dramatic lift on hover */
+            box-shadow: 0 5px 12px rgba(102, 126, 234, 0.4);
             background-image: linear-gradient(to left, #667eea, #764ba2); /* Reverse gradient on hover */
         }
         .loading-spinner {
-            border: 3px solid rgba(0, 0, 0, 0.1); /* Thinner border */
+            border: 2px solid rgba(0, 0, 0, 0.1); /* Thinner border */
             border-left-color: #667eea; /* Spinner color matching button */
             border-radius: 50%;
-            width: 24px; /* Reduced spinner size */
-            height: 24px;
+            width: 20px; /* Reduced spinner size */
+            height: 20px;
             animation: spin 1s linear infinite;
             margin: 0 auto;
         }
@@ -101,23 +101,23 @@
             background-color: #e0f2fe; /* Lighter blue for info */
             border: 1px solid #90cdf4;
             color: #2b6cb0;
-            padding: 1rem; /* Reduced padding */
-            border-radius: 0.6rem; /* Slightly less rounded */
-            margin-top: 0.75rem; /* Reduced margin */
+            padding: 0.75rem; /* Reduced padding */
+            border-radius: 0.5rem; /* Slightly less rounded */
+            margin-top: 0.5rem; /* Reduced margin */
             text-align: center;
             font-weight: 500;
-            font-size: 0.9rem; /* Reduced font size */
+            font-size: 0.8rem; /* Reduced font size */
         }
         .error-box {
             background-color: #fee2e2; /* Lighter red for error */
             border: 1px solid #fc8181;
             color: #c53030;
-            padding: 1rem; /* Reduced padding */
-            border-radius: 0.6rem; /* Slightly less rounded */
-            margin-top: 0.75rem; /* Reduced margin */
+            padding: 0.75rem; /* Reduced padding */
+            border-radius: 0.5rem; /* Slightly less rounded */
+            margin-top: 0.5rem; /* Reduced margin */
             text-align: center;
             font-weight: 500;
-            font-size: 0.9rem; /* Reduced font size */
+            font-size: 0.8rem; /* Reduced font size */
         }
     </style>
 </head>
@@ -128,21 +128,21 @@
         <div id="loadingIndicator" class="loading-spinner hidden"></div>
         <div id="errorMessage" class="error-box hidden"></div>
 
-        <div class="flex flex-col gap-4"> <!-- Reduced gap between cards -->
+        <div class="flex flex-col gap-3"> <!-- Reduced gap between cards -->
             <div class="price-card">
-                <h2 class="text-xl font-semibold text-gray-800 text-center">Bitcoin (BTC)</h2>
+                <h2 class="text-base font-semibold text-gray-800 text-center">Bitcoin (BTC)</h2>
                 <p id="bitcoinPrice" class="price-value">Loading...</p>
                 <p id="bitcoinTimestamp" class="timestamp">Last updated: --</p>
             </div>
 
             <div class="price-card">
-                <h2 class="text-xl font-semibold text-gray-800 text-center">Gold (XAU)</h2>
+                <h2 class="text-base font-semibold text-gray-800 text-center">Gold (XAU)</h2>
                 <p id="goldPrice" class="price-value">Loading...</p>
                 <p id="goldTimestamp" class="timestamp">Last updated: --</p>
             </div>
 
             <div class="price-card">
-                <h2 class="text-xl font-semibold text-gray-800 text-center">Silver (XAG)</h2>
+                <h2 class="text-base font-semibold text-gray-800 text-center">Silver (XAG)</h2>
                 <p id="silverPrice" class="price-value">Loading...</p>
                 <p id="silverTimestamp" class="timestamp">Last updated: --</p>
             </div>
