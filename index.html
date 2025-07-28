@@ -52,6 +52,26 @@
             word-wrap: break-word;
             text-align: center; /* Center align price value */
             line-height: 1; /* Tighter line height */
+            display: flex; /* Use flexbox for price and arrow */
+            justify-content: center;
+            align-items: center;
+            transition: color 0.3s ease-in-out; /* Smooth color transition */
+        }
+        .price-value.price-up {
+            color: #10b981; /* Green for price increase */
+        }
+        .price-value.price-down {
+            color: #ef4444; /* Red for price decrease */
+        }
+        .price-arrow {
+            margin-left: 0.5rem;
+            font-size: 0.9rem; /* Smaller arrow */
+        }
+        .price-arrow.up {
+            color: #10b981;
+        }
+        .price-arrow.down {
+            color: #ef4444;
         }
         .timestamp {
             font-size: 0.7rem; /* Reduced timestamp font size */
@@ -119,6 +139,18 @@
             font-weight: 500;
             font-size: 0.8rem; /* Reduced font size */
         }
+        .sparkline-canvas {
+            width: 100%;
+            height: 40px; /* Fixed height for sparkline */
+            display: block;
+            margin-top: 0.5rem;
+        }
+        .sparkline-label {
+            font-size: 0.65rem; /* Smaller label for sparkline */
+            color: #718096;
+            text-align: center;
+            margin-top: 0.2rem; /* Small margin below canvas */
+        }
     </style>
 </head>
 <body>
@@ -128,22 +160,28 @@
         <div id="loadingIndicator" class="loading-spinner hidden"></div>
         <div id="errorMessage" class="error-box hidden"></div>
 
-        <div class="flex flex-col gap-3"> <!-- Reduced gap between cards -->
+        <div class="flex flex-col gap-3">
             <div class="price-card">
                 <h2 class="text-base font-semibold text-gray-800 text-center">Bitcoin (BTC)</h2>
                 <p id="bitcoinPrice" class="price-value">Loading...</p>
+                <canvas id="bitcoinSparkline" class="sparkline-canvas"></canvas>
+                <p id="bitcoinSparklineLabel" class="sparkline-label">(7-day trend)</p>
                 <p id="bitcoinTimestamp" class="timestamp">Last updated: --</p>
             </div>
 
             <div class="price-card">
                 <h2 class="text-base font-semibold text-gray-800 text-center">Gold (XAU)</h2>
                 <p id="goldPrice" class="price-value">Loading...</p>
+                <canvas id="goldSparkline" class="sparkline-canvas"></canvas>
+                <p id="goldSparklineLabel" class="sparkline-label">(7-day trend)</p>
                 <p id="goldTimestamp" class="timestamp">Last updated: --</p>
             </div>
 
             <div class="price-card">
                 <h2 class="text-base font-semibold text-gray-800 text-center">Silver (XAG)</h2>
                 <p id="silverPrice" class="price-value">Loading...</p>
+                <canvas id="silverSparkline" class="sparkline-canvas"></canvas>
+                <p id="silverSparklineLabel" class="sparkline-label">(7-day trend)</p>
                 <p id="silverTimestamp" class="timestamp">Last updated: --</p>
             </div>
         </div>
@@ -162,9 +200,22 @@
         const errorMessageElem = document.getElementById('errorMessage');
         const refreshButton = document.getElementById('refreshButton');
 
+        const bitcoinSparklineCanvas = document.getElementById('bitcoinSparkline');
+        const goldSparklineCanvas = document.getElementById('goldSparkline');
+        const silverSparklineCanvas = document.getElementById('silverSparkline');
+
+        // Added specific IDs for sparkline labels
+        const bitcoinSparklineLabel = document.getElementById('bitcoinSparklineLabel');
+        const goldSparklineLabel = document.getElementById('goldSparklineLabel');
+        const silverSparklineLabel = document.getElementById('silverSparklineLabel');
+
+
         // API Endpoints
-        const COINGECKO_API_URL = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_last_updated_at=true';
+        const COINGECKO_API_URL = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_last_updated_at=true&include_24hr_change=true';
+        const COINGECKO_SPARKLINE_URL = 'https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=7'; // 7 days historical data
         const METALPRICE_API_BASE_URL = 'https://api.metalpriceapi.com/v1/latest';
+        const METALPRICE_API_FLUCTUATION_URL = 'https://api.metalpriceapi.com/v1/fluctuation';
+        const METALPRICE_API_TIMESERIES_URL = 'https://api.metalpriceapi.com/v1/timeseries';
         const METALPRICE_API_KEY = '28c55300dcd281ebd67e04b5ba1e2471'; // Your provided API key
 
         // Function to format timestamp
@@ -189,13 +240,101 @@
             element.classList.add('hidden');
         }
 
+        // Function to draw sparkline on canvas
+        function drawSparkline(canvas, dataPoints, lineColor, fillColor) {
+            // Ensure canvas dimensions are set correctly for high-DPI screens
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr); // Scale context to match device pixel ratio
+
+            if (!canvas || !dataPoints || dataPoints.length < 2) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas if no data
+                return { min: 0, max: 0 }; // Return default min/max
+            }
+
+            const width = rect.width; // Use CSS width for drawing calculations
+            const height = rect.height; // Use CSS height for drawing calculations
+
+            // Clear previous drawing
+            ctx.clearRect(0, 0, width, height);
+
+            // Find min and max values for scaling
+            const minVal = Math.min(...dataPoints);
+            const maxVal = Math.max(...dataPoints);
+
+            // Add a small buffer to min/max for better visual representation
+            const buffer = (maxVal - minVal) * 0.1;
+            const effectiveMin = minVal - buffer;
+            const effectiveMax = maxVal + buffer;
+            const range = effectiveMax - effectiveMin === 0 ? 1 : effectiveMax - effectiveMin;
+
+
+            // Scale data points to canvas height
+            const scaledPoints = dataPoints.map(val => {
+                return height - ((val - effectiveMin) / range) * height;
+            });
+
+            // Draw the line
+            ctx.beginPath();
+            ctx.moveTo(0, scaledPoints[0]);
+            for (let i = 1; i < scaledPoints.length; i++) {
+                const x = (i / (scaledPoints.length - 1)) * width;
+                ctx.lineTo(x, scaledPoints[i]);
+            }
+            ctx.strokeStyle = lineColor;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // Draw fill area (optional, but makes it look nicer)
+            if (fillColor) {
+                ctx.lineTo(width, height);
+                ctx.lineTo(0, height);
+                ctx.closePath();
+                ctx.fillStyle = fillColor;
+                ctx.fill();
+            }
+
+            return { min: minVal, max: maxVal }; // Return min and max values
+        }
+
+        // Function to update price display with arrow and color
+        function updatePriceDisplay(element, price, changePercentage) {
+            element.innerHTML = `$${price.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`;
+
+            // Remove previous price change classes
+            element.classList.remove('price-up', 'price-down');
+            const existingArrow = element.querySelector('.price-arrow');
+            if (existingArrow) {
+                existingArrow.remove();
+            }
+
+            if (changePercentage !== undefined && changePercentage !== null) {
+                const arrow = document.createElement('span');
+                arrow.classList.add('price-arrow');
+
+                if (changePercentage > 0) {
+                    arrow.textContent = ' ▲';
+                    arrow.classList.add('up');
+                    element.classList.add('price-up');
+                } else if (changePercentage < 0) {
+                    arrow.textContent = ' ▼';
+                    arrow.classList.add('down');
+                    element.classList.add('price-down');
+                }
+                element.appendChild(arrow);
+            }
+        }
+
         // Function to fetch prices
         async function fetchPrices() {
             loadingIndicator.classList.remove('hidden');
             hideMessage(errorMessageElem);
 
             try {
-                // Fetch Bitcoin price
+                // --- Fetch Bitcoin price and 24h change ---
                 const bitcoinResponse = await fetch(COINGECKO_API_URL);
                 if (!bitcoinResponse.ok) {
                     throw new Error(`CoinGecko API error: ${bitcoinResponse.statusText}`);
@@ -203,9 +342,10 @@
                 const bitcoinData = await bitcoinResponse.json();
                 const bitcoinPrice = bitcoinData.bitcoin?.usd;
                 const bitcoinLastUpdated = bitcoinData.bitcoin?.last_updated_at;
+                const bitcoin24hChange = bitcoinData.bitcoin?.usd_24h_change;
 
                 if (bitcoinPrice) {
-                    bitcoinPriceElem.textContent = `$${bitcoinPrice.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`;
+                    updatePriceDisplay(bitcoinPriceElem, bitcoinPrice, bitcoin24hChange);
                     bitcoinTimestampElem.textContent = formatTimestamp(bitcoinLastUpdated);
                 } else {
                     bitcoinPriceElem.textContent = 'N/A';
@@ -213,25 +353,97 @@
                     console.error('Bitcoin price data not found in response:', bitcoinData);
                 }
 
-                // Fetch Gold and Silver prices
-                const metalPriceApiUrl = `${METALPRICE_API_BASE_URL}?api_key=${METALPRICE_API_KEY}&base=USD&currencies=XAU,XAG`;
-                const metalResponse = await fetch(metalPriceApiUrl);
+                // --- Fetch Bitcoin Sparkline data ---
+                const bitcoinSparklineResponse = await fetch(COINGECKO_SPARKLINE_URL);
+                if (!bitcoinSparklineResponse.ok) {
+                    throw new Error(`CoinGecko Sparkline API error: ${bitcoinSparklineResponse.statusText}`);
+                }
+                const bitcoinSparklineData = await bitcoinSparklineResponse.json();
+                const bitcoinPrices = bitcoinSparklineData.prices ? bitcoinSparklineData.prices.map(item => item[1]) : [];
+                const bitcoinMinMax = drawSparkline(bitcoinSparklineCanvas, bitcoinPrices, '#667eea', 'rgba(102, 126, 234, 0.1)');
+                if (bitcoinMinMax) {
+                    bitcoinSparklineLabel.textContent = `(7-day trend: $${bitcoinMinMax.min.toFixed(2)} - $${bitcoinMinMax.max.toFixed(2)})`;
+                }
 
+
+                // --- Fetch Gold and Silver prices and 24h fluctuation ---
+                const today = new Date();
+                const sevenDaysAgo = new Date(today);
+                sevenDaysAgo.setDate(today.getDate() - 7);
+                const yesterday = new Date(today);
+                yesterday.setDate(today.getDate() - 1);
+
+
+                const formatDate = (date) => date.toISOString().split('T')[0]; // YYYY-MM-DD
+
+                const metalPriceApiUrl = `${METALPRICE_API_BASE_URL}?api_key=${METALPRICE_API_KEY}&base=USD&currencies=XAU,XAG`;
+                const metalFluctuationApiUrl = `${METALPRICE_API_FLUCTUATION_URL}?api_key=${METALPRICE_API_KEY}&start_date=${formatDate(yesterday)}&end_date=${formatDate(today)}&base=USD&currencies=XAU,XAG`;
+                // Corrected: The timeseries endpoint uses 'symbols' not 'currencies'
+                const metalTimeseriesApiUrl = `${METALPRICE_API_TIMESERIES_URL}?api_key=${METALPRICE_API_KEY}&start_date=${formatDate(sevenDaysAgo)}&end_date=${formatDate(today)}&base=USD&symbols=XAU,XAG`;
+
+
+                const [metalResponse, fluctuationResponse, timeseriesResponse] = await Promise.all([
+                    fetch(metalPriceApiUrl),
+                    fetch(metalFluctuationApiUrl),
+                    fetch(metalTimeseriesApiUrl)
+                ]);
+
+                // Handle current prices
                 if (!metalResponse.ok) {
                     const errorData = await metalResponse.json();
-                    throw new Error(`MetalpriceAPI error: ${metalResponse.status} - ${errorData.error?.message || metalResponse.statusText}`);
+                    throw new Error(`MetalpriceAPI (latest) error: ${metalResponse.status} - ${errorData.error?.message || metalResponse.statusText}`);
                 }
                 const metalData = await metalResponse.json();
-                console.log('MetalpriceAPI Response:', metalData); // Log the full response for debugging
-
-                // Accessing rates using the full symbol from MetalpriceAPI (e.g., USDXAU, USDXAG)
                 const goldPrice = metalData.rates?.USDXAU;
                 const silverPrice = metalData.rates?.USDXAG;
-                const metalLastUpdated = metalData.timestamp; // MetalpriceAPI provides Unix timestamp
+                const metalLastUpdated = metalData.timestamp;
+
+                // Handle fluctuation data
+                if (!fluctuationResponse.ok) {
+                    const errorData = await fluctuationResponse.json();
+                    throw new Error(`MetalpriceAPI (fluctuation) error: ${fluctuationResponse.status} - ${errorData.error?.message || fluctuationResponse.statusText}`);
+                }
+                const fluctuationData = await fluctuationResponse.json();
+                console.log("MetalpriceAPI Fluctuation Data:", fluctuationData); // Debugging fluctuation data
+                // Corrected: Access change_pct using USDXAU/USDXAG if that's how it's returned, otherwise XAU/XAG
+                // Based on previous debug, it was XAU/XAG for fluctuation, but USDXAU for latest. Let's re-verify.
+                // Reverting to XAU/XAG for fluctuation as per initial assumption and documentation.
+                const gold24hChange = fluctuationData.rates?.XAU?.change_pct;
+                const silver24hChange = fluctuationData.rates?.XAG?.change_pct;
+
+                // Handle timeseries data for sparklines
+                if (!timeseriesResponse.ok) {
+                    const errorData = await timeseriesResponse.json();
+                    throw new Error(`MetalpriceAPI (timeseries) error: ${timeseriesResponse.status} - ${errorData.error?.message || timeseriesResponse.statusText}`);
+                }
+                const timeseriesData = await timeseriesResponse.json();
+                console.log("MetalpriceAPI Timeseries Data:", timeseriesData); // Log timeseries data for debugging
+
+                const goldSparklinePrices = [];
+                const silverSparklinePrices = [];
+
+                // Iterate through the rates object to get prices for each day
+                if (timeseriesData.rates) {
+                    // Sort keys to ensure chronological order for sparkline
+                    const sortedDates = Object.keys(timeseriesData.rates).sort();
+                    sortedDates.forEach(date => {
+                        // Corrected: Access XAU/XAG directly from the date object
+                        if (timeseriesData.rates[date].XAU !== undefined) {
+                            goldSparklinePrices.push(timeseriesData.rates[date].XAU);
+                        }
+                        if (timeseriesData.rates[date].XAG !== undefined) {
+                            silverSparklinePrices.push(timeseriesData.rates[date].XAG);
+                        }
+                    });
+                }
 
                 if (goldPrice) {
-                    goldPriceElem.textContent = `$${goldPrice.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`;
+                    updatePriceDisplay(goldPriceElem, goldPrice, gold24hChange);
                     goldTimestampElem.textContent = formatTimestamp(metalLastUpdated);
+                    const goldMinMax = drawSparkline(goldSparklineCanvas, goldSparklinePrices, '#10b981', 'rgba(16, 185, 129, 0.1)'); /* Green for Gold */
+                    if (goldMinMax) {
+                        goldSparklineLabel.textContent = `(7-day trend: $${goldMinMax.min.toFixed(2)} - $${goldMinMax.max.toFixed(2)})`;
+                    }
                 } else {
                     goldPriceElem.textContent = 'N/A';
                     goldTimestampElem.textContent = 'Last updated: --';
@@ -239,8 +451,12 @@
                 }
 
                 if (silverPrice) {
-                    silverPriceElem.textContent = `$${silverPrice.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`;
+                    updatePriceDisplay(silverPriceElem, silverPrice, silver24hChange);
                     silverTimestampElem.textContent = formatTimestamp(metalLastUpdated);
+                    const silverMinMax = drawSparkline(silverSparklineCanvas, silverSparklinePrices, '#764ba2', 'rgba(118, 75, 162, 0.1)'); /* Purple for Silver */
+                    if (silverMinMax) {
+                        silverSparklineLabel.textContent = `(7-day trend: $${silverMinMax.min.toFixed(2)} - $${silverMinMax.max.toFixed(2)})`;
+                    }
                 } else {
                     silverPriceElem.textContent = 'N/A';
                     silverTimestampElem.textContent = 'Last updated: --';
@@ -249,13 +465,19 @@
 
             } catch (error) {
                 console.error('Error fetching prices:', error);
-                showMessage(errorMessageElem, `Failed to fetch prices: ${error.message}.`, 'error');
-                bitcoinPriceElem.textContent = 'Error';
-                goldPriceElem.textContent = 'Error';
-                silverPriceElem.textContent = 'Error';
+                showMessage(errorMessageElem, `Failed to fetch prices: ${error.message}. Please check your API key and internet connection, and ensure you haven't exceeded API rate limits.`, 'error');
+                bitcoinPriceElem.innerHTML = 'Error';
+                goldPriceElem.innerHTML = 'Error';
+                silverPriceElem.innerHTML = 'Error';
                 bitcoinTimestampElem.textContent = 'Last updated: --';
                 goldTimestampElem.textContent = 'Last updated: --';
                 silverTimestampElem.textContent = 'Last updated: --';
+                drawSparkline(bitcoinSparklineCanvas, []); // Clear sparklines on error
+                drawSparkline(goldSparklineCanvas, []);
+                drawSparkline(silverSparklineCanvas, []);
+                bitcoinSparklineLabel.textContent = '(7-day trend)'; // Reset label on error
+                goldSparklineLabel.textContent = '(7-day trend)';
+                silverSparklineLabel.textContent = '(7-day trend)';
             } finally {
                 loadingIndicator.classList.add('hidden');
             }
