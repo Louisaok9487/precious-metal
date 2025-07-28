@@ -172,16 +172,14 @@
             <div class="price-card">
                 <h2 class="text-base font-semibold text-gray-800 text-center">Gold (XAU)</h2>
                 <p id="goldPrice" class="price-value">Loading...</p>
-                <canvas id="goldSparkline" class="sparkline-canvas"></canvas>
-                <p id="goldSparklineLabel" class="sparkline-label">(7-day trend)</p>
+                <!-- Gold Sparkline and Label removed as per request -->
                 <p id="goldTimestamp" class="timestamp">Last updated: --</p>
             </div>
 
             <div class="price-card">
                 <h2 class="text-base font-semibold text-gray-800 text-center">Silver (XAG)</h2>
                 <p id="silverPrice" class="price-value">Loading...</p>
-                <canvas id="silverSparkline" class="sparkline-canvas"></canvas>
-                <p id="silverSparklineLabel" class="sparkline-label">(7-day trend)</p>
+                <!-- Silver Sparkline and Label removed as per request -->
                 <p id="silverTimestamp" class="timestamp">Last updated: --</p>
             </div>
         </div>
@@ -201,13 +199,15 @@
         const refreshButton = document.getElementById('refreshButton');
 
         const bitcoinSparklineCanvas = document.getElementById('bitcoinSparkline');
-        const goldSparklineCanvas = document.getElementById('goldSparkline');
-        const silverSparklineCanvas = document.getElementById('silverSparkline');
+        // Gold and Silver sparkline canvases are no longer needed
+        // const goldSparklineCanvas = document.getElementById('goldSparkline');
+        // const silverSparklineCanvas = document.getElementById('silverSparkline');
 
         // Added specific IDs for sparkline labels
         const bitcoinSparklineLabel = document.getElementById('bitcoinSparklineLabel');
-        const goldSparklineLabel = document.getElementById('goldSparklineLabel');
-        const silverSparklineLabel = document.getElementById('silverSparklineLabel');
+        // Gold and Silver sparkline labels are no longer needed
+        // const goldSparklineLabel = document.getElementById('goldSparklineLabel');
+        // const silverSparklineLabel = document.getElementById('silverSparklineLabel');
 
 
         // API Endpoints
@@ -215,7 +215,8 @@
         const COINGECKO_SPARKLINE_URL = 'https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=7'; // 7 days historical data
         const METALPRICE_API_BASE_URL = 'https://api.metalpriceapi.com/v1/latest';
         const METALPRICE_API_FLUCTUATION_URL = 'https://api.metalpriceapi.com/v1/fluctuation';
-        const METALPRICE_API_TIMESERIES_URL = 'https://api.metalpriceapi.com/v1/timeseries';
+        // The timeseries API is no longer needed since gold/silver sparklines are removed
+        // const METALPRICE_API_TIMESERIES_URL = 'https://api.metalpriceapi.com/v1/timeseries';
         const METALPRICE_API_KEY = '28c55300dcd281ebd67e04b5ba1e2471'; // Your provided API key
 
         // Function to format timestamp
@@ -368,8 +369,6 @@
 
                 // --- Fetch Gold and Silver prices and 24h fluctuation ---
                 const today = new Date();
-                const sevenDaysAgo = new Date(today);
-                sevenDaysAgo.setDate(today.getDate() - 7);
                 const yesterday = new Date(today);
                 yesterday.setDate(today.getDate() - 1);
 
@@ -378,14 +377,15 @@
 
                 const metalPriceApiUrl = `${METALPRICE_API_BASE_URL}?api_key=${METALPRICE_API_KEY}&base=USD&currencies=XAU,XAG`;
                 const metalFluctuationApiUrl = `${METALPRICE_API_FLUCTUATION_URL}?api_key=${METALPRICE_API_KEY}&start_date=${formatDate(yesterday)}&end_date=${formatDate(today)}&base=USD&currencies=XAU,XAG`;
-                // Corrected: The timeseries endpoint uses 'symbols' not 'currencies'
-                const metalTimeseriesApiUrl = `${METALPRICE_API_TIMESERIES_URL}?api_key=${METALPRICE_API_KEY}&start_date=${formatDate(sevenDaysAgo)}&end_date=${formatDate(today)}&base=USD&symbols=XAU,XAG`;
+                // Removed timeseries API call as sparklines are removed for gold and silver
+                // const metalTimeseriesApiUrl = `${METALPRICE_API_TIMESERIES_URL}?api_key=${METALPRICE_API_KEY}&start_date=${formatDate(sevenDaysAgo)}&end_date=${formatDate(today)}&base=USD&symbols=XAU,XAG`;
 
 
-                const [metalResponse, fluctuationResponse, timeseriesResponse] = await Promise.all([
+                const [metalResponse, fluctuationResponse] = await Promise.all([
                     fetch(metalPriceApiUrl),
                     fetch(metalFluctuationApiUrl),
-                    fetch(metalTimeseriesApiUrl)
+                    // Removed timeseries fetch from Promise.all
+                    // fetch(metalTimeseriesApiUrl)
                 ]);
 
                 // Handle current prices
@@ -404,46 +404,33 @@
                     throw new Error(`MetalpriceAPI (fluctuation) error: ${fluctuationResponse.status} - ${errorData.error?.message || fluctuationResponse.statusText}`);
                 }
                 const fluctuationData = await fluctuationResponse.json();
-                console.log("MetalpriceAPI Fluctuation Data:", fluctuationData); // Debugging fluctuation data
-                // Corrected: Access change_pct using USDXAU/USDXAG if that's how it's returned, otherwise XAU/XAG
-                // Based on previous debug, it was XAU/XAG for fluctuation, but USDXAU for latest. Let's re-verify.
-                // Reverting to XAU/XAG for fluctuation as per initial assumption and documentation.
                 const gold24hChange = fluctuationData.rates?.XAU?.change_pct;
                 const silver24hChange = fluctuationData.rates?.XAG?.change_pct;
 
-                // Handle timeseries data for sparklines
-                if (!timeseriesResponse.ok) {
-                    const errorData = await timeseriesResponse.json();
-                    throw new Error(`MetalpriceAPI (timeseries) error: ${timeseriesResponse.status} - ${errorData.error?.message || timeseriesResponse.statusText}`);
-                }
-                const timeseriesData = await timeseriesResponse.json();
-                console.log("MetalpriceAPI Timeseries Data:", timeseriesData); // Log timeseries data for debugging
-
-                const goldSparklinePrices = [];
-                const silverSparklinePrices = [];
-
-                // Iterate through the rates object to get prices for each day
-                if (timeseriesData.rates) {
-                    // Sort keys to ensure chronological order for sparkline
-                    const sortedDates = Object.keys(timeseriesData.rates).sort();
-                    sortedDates.forEach(date => {
-                        // Corrected: Access XAU/XAG directly from the date object
-                        if (timeseriesData.rates[date].XAU !== undefined) {
-                            goldSparklinePrices.push(timeseriesData.rates[date].XAU);
-                        }
-                        if (timeseriesData.rates[date].XAG !== undefined) {
-                            silverSparklinePrices.push(timeseriesData.rates[date].XAG);
-                        }
-                    });
-                }
+                // Timeseries data for sparklines is no longer needed
+                // const timeseriesData = await timeseriesResponse.json();
+                // const goldSparklinePrices = [];
+                // const silverSparklinePrices = [];
+                // if (timeseriesData.rates) {
+                //     const sortedDates = Object.keys(timeseriesData.rates).sort();
+                //     sortedDates.forEach(date => {
+                //         if (timeseriesData.rates[date].XAU !== undefined) {
+                //             goldSparklinePrices.push(timeseriesData.rates[date].XAU);
+                //         }
+                //         if (timeseriesData.rates[date].XAG !== undefined) {
+                //             silverSparklinePrices.push(timeseriesData.rates[date].XAG);
+                //         }
+                //     });
+                // }
 
                 if (goldPrice) {
                     updatePriceDisplay(goldPriceElem, goldPrice, gold24hChange);
                     goldTimestampElem.textContent = formatTimestamp(metalLastUpdated);
-                    const goldMinMax = drawSparkline(goldSparklineCanvas, goldSparklinePrices, '#10b981', 'rgba(16, 185, 129, 0.1)'); /* Green for Gold */
-                    if (goldMinMax) {
-                        goldSparklineLabel.textContent = `(7-day trend: $${goldMinMax.min.toFixed(2)} - $${goldMinMax.max.toFixed(2)})`;
-                    }
+                    // Removed drawSparkline for gold
+                    // const goldMinMax = drawSparkline(goldSparklineCanvas, goldSparklinePrices, '#10b981', 'rgba(16, 185, 129, 0.1)'); /* Green for Gold */
+                    // if (goldMinMax) {
+                    //     goldSparklineLabel.textContent = `(7-day trend: $${goldMinMax.min.toFixed(2)} - $${goldMinMax.max.toFixed(2)})`;
+                    // }
                 } else {
                     goldPriceElem.textContent = 'N/A';
                     goldTimestampElem.textContent = 'Last updated: --';
@@ -453,10 +440,11 @@
                 if (silverPrice) {
                     updatePriceDisplay(silverPriceElem, silverPrice, silver24hChange);
                     silverTimestampElem.textContent = formatTimestamp(metalLastUpdated);
-                    const silverMinMax = drawSparkline(silverSparklineCanvas, silverSparklinePrices, '#764ba2', 'rgba(118, 75, 162, 0.1)'); /* Purple for Silver */
-                    if (silverMinMax) {
-                        silverSparklineLabel.textContent = `(7-day trend: $${silverMinMax.min.toFixed(2)} - $${silverMinMax.max.toFixed(2)})`;
-                    }
+                    // Removed drawSparkline for silver
+                    // const silverMinMax = drawSparkline(silverSparklineCanvas, silverSparklinePrices, '#764ba2', 'rgba(118, 75, 162, 0.1)'); /* Purple for Silver */
+                    // if (silverMinMax) {
+                    //     silverSparklineLabel.textContent = `(7-day trend: $${silverMinMax.min.toFixed(2)} - $${silverMinMax.max.toFixed(2)})`;
+                    // }
                 } else {
                     silverPriceElem.textContent = 'N/A';
                     silverTimestampElem.textContent = 'Last updated: --';
@@ -473,11 +461,13 @@
                 goldTimestampElem.textContent = 'Last updated: --';
                 silverTimestampElem.textContent = 'Last updated: --';
                 drawSparkline(bitcoinSparklineCanvas, []); // Clear sparklines on error
-                drawSparkline(goldSparklineCanvas, []);
-                drawSparkline(silverSparklineCanvas, []);
+                // Removed sparkline clearing for gold and silver
+                // drawSparkline(goldSparklineCanvas, []);
+                // drawSparkline(silverSparklineCanvas, []);
                 bitcoinSparklineLabel.textContent = '(7-day trend)'; // Reset label on error
-                goldSparklineLabel.textContent = '(7-day trend)';
-                silverSparklineLabel.textContent = '(7-day trend)';
+                // Removed label reset for gold and silver
+                // goldSparklineLabel.textContent = '(7-day trend)';
+                // silverSparklineLabel.textContent = '(7-day trend)';
             } finally {
                 loadingIndicator.classList.add('hidden');
             }
